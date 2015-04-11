@@ -1,43 +1,37 @@
 from multiprocessing import Pool
-import httplib
 import adns
 import time
+import socket
 
 c = adns.init()
 A = adns.rr.A
 
+
 def dns_(domain):
-  conn = httplib.HTTPConnection(domain)
-  try:
-    conn.connect()
-  except Exception:
-    pass
-  conn.close()
+    try:
+        socket.gethostbyname(domain)
+    except socket.gaierror:
+        pass
 
 def adns_(doamin):
-  d = c.synchronous(doamin, A)
-  if len(d[3]) > 0:
-    conn = httplib.HTTPConnection(d[3][0])
-    try:
-      conn.connect()
-    except Exception:
-      pass
-    conn.close()
+    c.synchronous(doamin, A)
+
 
 def main():
-  f = open('top-1m.csv','r')
-  urls = [line.split(',')[1].strip() for line in f.readlines()]
-  f.close()
-  
-  p = Pool(4)
+    f = open('top-1m.csv', 'r')
+    urls = [line.split(',')[1].strip() for line in f.readlines()]
+    f.close()
+    urls = urls[:1000]
 
-  start = time.time()
-  p.map(dns_, urls)
-  print time.time() - start, " seconds for system dns resolver"
+    p = Pool(100)
 
-  start = time.time()
-  p.map(adns_, urls)
-  print time.time() - start, " seconds for adns resolver"
+    start = time.time()
+    p.map(dns_, urls)
+    print time.time() - start, " seconds for system dns resolver"
+
+    start = time.time()
+    p.map(adns_, urls)
+    print time.time() - start, " seconds for adns resolver"
 
 if __name__ == '__main__':
-  main()
+    main()
