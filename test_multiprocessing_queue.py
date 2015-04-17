@@ -2,9 +2,11 @@ import multiprocessing
 import time
 
 
-def worker(x, q):
-    if x < 5000:
+def worker(x, q, finished_flag):
+    if x < 50000:
         q.put(x+100)
+    else:
+        finished_flag.set()
 
 
 class WorkerProcess(multiprocessing.Process):
@@ -13,14 +15,15 @@ class WorkerProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
         self.jobs = q
         self.start_flag = start_flag
+        self._finished = multiprocessing.Event()
 
     def run(self):
         self.start_flag.wait()
         while True:
-            num = self.jobs.get()
-            worker(num, self.jobs)
-            if num >= 5000:
+            if self._finished.is_set() and self.jobs.empty():
                 break
+            num = self.jobs.get()
+            worker(num, self.jobs, self._finished)
 
 
 if __name__ == '__main__':
