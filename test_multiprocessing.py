@@ -7,8 +7,8 @@ import time
 def worker(x, q, p):
     print x
     if x < 200:
-        q.put(x+100, False)
-    p.put(1, False)
+        q.put(x+100)
+    p.put(1)
 
 
 def main():
@@ -17,7 +17,8 @@ def main():
     m = multiprocessing.Manager()
     print "Building working queue"
     start = time.time()
-    q = m.Queue()
+    # q = m.Queue()
+    q = multiprocessing.Queue()
     for i in xrange(100):
         q.put(i)
     print time.time() - start, " seconds"
@@ -27,16 +28,19 @@ def main():
     print time.time() - start, " seconds"
     print "Preparing process monitor queue"
     start = time.time()
-    process_monitor = m.Queue()
+    # process_monitor = m.Queue()
+    process_monitor = multiprocessing.Queue()
     for i in xrange(4):
         process_monitor.put(1)
     print time.time() - start, " seconds"
 
     while not q.empty():
+        if process_monitor.empty():
+            continue
         process_monitor.get()
         num = q.get()
         # print num
-        p.apply_async(worker, args=(num, q, process_monitor))
+        p.apply_async(worker, args=(num, q, process_monitor,))
 
 if __name__ == "__main__":
     main()
