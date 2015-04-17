@@ -3,7 +3,6 @@ import time
 
 
 def worker(x, q):
-    print x
     if x < 5000:
         q.put(x+100)
 
@@ -17,9 +16,11 @@ class WorkerProcess(multiprocessing.Process):
 
     def run(self):
         self.start_flag.wait()
-        while not self.jobs.empty():
+        while True:
             num = self.jobs.get()
             worker(num, self.jobs)
+            if num >= 5000:
+                break
 
 
 if __name__ == '__main__':
